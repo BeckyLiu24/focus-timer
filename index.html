@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#6f8f72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Focus Timer">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Focus Timer</title>
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="timer-panel" aria-labelledby="app-title">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Start small</p>
+            <h1 id="app-title">Focus Timer</h1>
+          </div>
+          <button class="notify-button" id="notify-button" type="button" aria-label="开启完成提醒" title="开启完成提醒">
+            <span aria-hidden="true">🔔</span>
+            <span>提醒</span>
+          </button>
+        </header>
+
+        <div class="garden" aria-label="成长奖励场景">
+          <div class="sky-orbit" aria-hidden="true"></div>
+          <div class="garden-bed" id="garden-bed"></div>
+          <div class="garden-label">
+            <span id="garden-stage">种下一颗开始的种子</span>
+            <strong id="collection-count">0/8</strong>
+          </div>
+        </div>
+
+        <label class="task-label" for="task-input">这轮做什么？</label>
+        <input id="task-input" class="task-input" type="text" maxlength="40" placeholder="可空着，直接开始也很好">
+
+        <fieldset class="duration-picker" id="duration-picker">
+          <legend>专注时长</legend>
+          <div class="duration-options">
+            <button class="duration-option active" type="button" data-minutes="5">5 分钟</button>
+            <button class="duration-option" type="button" data-minutes="15">15 分钟</button>
+            <button class="duration-option" type="button" data-minutes="25">25 分钟</button>
+            <label class="custom-duration">
+              <span>自定</span>
+              <input id="custom-minutes" type="number" min="1" max="120" inputmode="numeric" placeholder="10">
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="cycle-toggle">
+          <input id="auto-cycle" type="checkbox">
+          <span>自动循环专注 / 休息</span>
+        </label>
+
+        <div class="clock" role="timer" aria-live="polite">
+          <span id="time-left">05:00</span>
+          <small id="mode-label">启动专注</small>
+        </div>
+
+        <div class="actions">
+          <button id="primary-action" class="primary-action" type="button">开始 5 分钟</button>
+          <button id="secondary-action" class="secondary-action" type="button">跳过休息</button>
+        </div>
+
+        <div class="session-note" id="session-note" aria-live="polite">先开始 5 分钟。完成后再决定要不要进入 25 分钟。</div>
+      </section>
+
+      <section class="stats-panel" aria-label="专注记录">
+        <div class="stat-grid">
+          <article>
+            <span>今日完成</span>
+            <strong id="today-count">0</strong>
+          </article>
+          <article>
+            <span>连续天数</span>
+            <strong id="streak-count">0</strong>
+          </article>
+          <article>
+            <span>总分钟</span>
+            <strong id="total-minutes">0</strong>
+          </article>
+          <article>
+            <span>成长值</span>
+            <strong id="growth-count">0</strong>
+          </article>
+        </div>
+
+        <div class="week-card">
+          <div class="section-heading">
+            <h2>本周</h2>
+            <span id="interruption-count">0 次中断</span>
+          </div>
+          <div class="week-chart" id="week-chart" aria-label="最近七天专注分钟"></div>
+        </div>
+
+        <div class="reward-card">
+          <div class="section-heading">
+            <h2>植物收藏</h2>
+            <span id="xp-count">0 XP</span>
+          </div>
+          <div class="collection" id="collection"></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="reward-dialog" class="reward-dialog">
+      <form method="dialog">
+        <p class="eyebrow">完成了</p>
+        <h2 id="reward-title">领取奖励</h2>
+        <p id="reward-copy">你让今天往前动了一点。</p>
+        <div class="reward-prize" id="reward-prize">+5 成长值</div>
+        <div class="dialog-actions">
+          <button id="extend-focus" value="extend" class="primary-action" type="submit">继续 25 分钟</button>
+          <button id="finish-session" value="finish" class="secondary-action" type="submit">先收下</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

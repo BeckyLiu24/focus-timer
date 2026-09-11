@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="Focus Timer icon">
+  <rect width="192" height="192" rx="44" fill="#6f8f72"/>
+  <circle cx="96" cy="76" r="38" fill="#f7d897"/>
+  <path d="M50 143c10-32 31-49 62-49 16 0 28 4 37 12-4 25-21 43-52 50-18 4-34 0-47-13z" fill="#fffaf0"/>
+  <path d="M82 134c9-27 22-44 40-51" fill="none" stroke="#4d7356" stroke-width="10" stroke-linecap="round"/>
+</svg>
