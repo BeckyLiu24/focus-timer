@@ -296,6 +296,64 @@ h2 {
   accent-color: var(--primary);
 }
 
+.sound-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255, 250, 240, 0.56);
+  display: grid;
+  gap: 10px;
+}
+
+.sound-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(118px, 0.7fr);
+  gap: 8px;
+}
+
+.sound-toggle,
+.sound-panel select {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 250, 240, 0.8);
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+.sound-toggle {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sound-toggle.active {
+  background: var(--primary);
+  border-color: transparent;
+  color: var(--primary-ink);
+}
+
+.sound-panel select {
+  padding: 0 10px;
+}
+
+.volume-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.volume-control input {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
 .clock {
   flex: 1;
   min-height: 156px;
@@ -513,6 +571,10 @@ h2 {
 
   .duration-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sound-topline {
+    grid-template-columns: 1fr;
   }
 
   .actions,

@@ -56,6 +56,25 @@
           <span>自动循环专注 / 休息</span>
         </label>
 
+        <section class="sound-panel" aria-label="背景声音">
+          <div class="sound-topline">
+            <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="false">
+              <span aria-hidden="true">🔇</span>
+              <span>声音关闭</span>
+            </button>
+            <select id="sound-select" aria-label="选择背景声音">
+              <option value="brown">棕噪音</option>
+              <option value="pink">粉噪音</option>
+              <option value="white">白噪音</option>
+              <option value="rain">轻雨声</option>
+            </select>
+          </div>
+          <label class="volume-control" for="volume-control">
+            <span>音量</span>
+            <input id="volume-control" type="range" min="0" max="100" value="28">
+          </label>
+        </section>
+
         <div class="clock" role="timer" aria-live="polite">
           <span id="time-left">05:00</span>
           <small id="mode-label">启动专注</small>

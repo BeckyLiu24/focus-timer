@@ -31,6 +31,10 @@ let session = {
 };
 let timerId = null;
 let completionContext = null;
+let audioContext = null;
+let noiseSource = null;
+let noiseGain = null;
+let soundEnabled = false;
 
 const el = {
   notifyButton: document.getElementById("notify-button"),
@@ -41,6 +45,9 @@ const el = {
   durationPicker: document.getElementById("duration-picker"),
   durationOptions: Array.from(document.querySelectorAll(".duration-option")),
   customMinutes: document.getElementById("custom-minutes"),
+  soundToggle: document.getElementById("sound-toggle"),
+  soundSelect: document.getElementById("sound-select"),
+  volumeControl: document.getElementById("volume-control"),
   timeLeft: document.getElementById("time-left"),
   modeLabel: document.getElementById("mode-label"),
   primaryAction: document.getElementById("primary-action"),
@@ -69,6 +76,9 @@ el.taskInput.addEventListener("input", updateSessionTask);
 el.durationOptions.forEach((button) => button.addEventListener("click", selectPresetDuration));
 el.customMinutes.addEventListener("input", selectCustomDuration);
 el.autoCycle.addEventListener("change", renderActions);
+el.soundToggle.addEventListener("click", toggleSound);
+el.soundSelect.addEventListener("change", restartSoundIfNeeded);
+el.volumeControl.addEventListener("input", updateVolume);
 el.rewardDialog.addEventListener("close", handleRewardClose);
 document.addEventListener("visibilitychange", syncTimer);
 
@@ -336,6 +346,7 @@ function render() {
   renderActions();
   renderStats();
   renderGarden();
+  renderSound();
 }
 
 function renderTimer() {
@@ -385,6 +396,132 @@ function renderDurationPicker() {
   el.durationOptions.forEach((button) => {
     button.classList.toggle("active", Number(button.dataset.minutes) === selectedFocusMinutes);
   });
+}
+
+async function toggleSound() {
+  if (soundEnabled) {
+    stopSound();
+    renderSound();
+    return;
+  }
+
+  try {
+    await startSound();
+    el.sessionNote.textContent = "背景声音已开启。它只在这个页面里播放。";
+  } catch {
+    el.sessionNote.textContent = "这个浏览器暂时不允许播放声音，请再点一次声音按钮。";
+  }
+  renderSound();
+}
+
+async function startSound() {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    audioContext = new AudioContextClass();
+    noiseGain = audioContext.createGain();
+    noiseGain.connect(audioContext.destination);
+  }
+
+  if (audioContext.state === "suspended") {
+    await audioContext.resume();
+  }
+
+  stopNoiseSource();
+  noiseSource = audioContext.createBufferSource();
+  noiseSource.buffer = createNoiseBuffer(el.soundSelect.value);
+  noiseSource.loop = true;
+  noiseSource.connect(noiseGain);
+  updateVolume();
+  noiseSource.start();
+  soundEnabled = true;
+}
+
+function stopSound() {
+  stopNoiseSource();
+  soundEnabled = false;
+}
+
+function stopNoiseSource() {
+  if (!noiseSource) return;
+  try {
+    noiseSource.stop();
+  } catch {
+    // Already stopped.
+  }
+  noiseSource.disconnect();
+  noiseSource = null;
+}
+
+function restartSoundIfNeeded() {
+  if (soundEnabled) {
+    startSound();
+  }
+}
+
+function updateVolume() {
+  if (!noiseGain) return;
+  const volume = Number(el.volumeControl.value) / 100;
+  noiseGain.gain.setTargetAtTime(volume * volume * 0.42, audioContext.currentTime, 0.03);
+}
+
+function renderSound() {
+  el.soundToggle.classList.toggle("active", soundEnabled);
+  el.soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+  el.soundToggle.firstElementChild.textContent = soundEnabled ? "🔊" : "🔇";
+  el.soundToggle.lastElementChild.textContent = soundEnabled ? "声音开启" : "声音关闭";
+}
+
+function createNoiseBuffer(type) {
+  const sampleRate = audioContext.sampleRate;
+  const frameCount = sampleRate * 2;
+  const buffer = audioContext.createBuffer(1, frameCount, sampleRate);
+  const data = buffer.getChannelData(0);
+
+  if (type === "rain") {
+    fillRainNoise(data);
+    return buffer;
+  }
+
+  let lastOut = 0;
+  let b0 = 0;
+  let b1 = 0;
+  let b2 = 0;
+  let b3 = 0;
+  let b4 = 0;
+  let b5 = 0;
+  let b6 = 0;
+
+  for (let index = 0; index < frameCount; index += 1) {
+    const white = Math.random() * 2 - 1;
+
+    if (type === "brown") {
+      lastOut = (lastOut + 0.02 * white) / 1.02;
+      data[index] = lastOut * 3.5;
+    } else if (type === "pink") {
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      data[index] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+      b6 = white * 0.115926;
+    } else {
+      data[index] = white * 0.45;
+    }
+  }
+
+  return buffer;
+}
+
+function fillRainNoise(data) {
+  let drip = 0;
+  for (let index = 0; index < data.length; index += 1) {
+    const base = (Math.random() * 2 - 1) * 0.15;
+    if (Math.random() > 0.985) drip = Math.random() * 0.8;
+    drip *= 0.92;
+    data[index] = base + drip * (Math.random() * 2 - 1);
+  }
 }
 
 function focusIdleNote() {
