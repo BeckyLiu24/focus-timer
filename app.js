@@ -34,6 +34,7 @@ let completionContext = null;
 let audioContext = null;
 let noiseSource = null;
 let noiseGain = null;
+let musicNodes = [];
 let soundEnabled = false;
 
 const el = {
@@ -427,17 +428,15 @@ async function startSound() {
   }
 
   stopNoiseSource();
-  noiseSource = audioContext.createBufferSource();
-  noiseSource.buffer = createNoiseBuffer(el.soundSelect.value);
-  noiseSource.loop = true;
-  noiseSource.connect(noiseGain);
+  stopMusicNodes();
+  createSoundscape(el.soundSelect.value);
   updateVolume();
-  noiseSource.start();
   soundEnabled = true;
 }
 
 function stopSound() {
   stopNoiseSource();
+  stopMusicNodes();
   soundEnabled = false;
 }
 
@@ -450,6 +449,22 @@ function stopNoiseSource() {
   }
   noiseSource.disconnect();
   noiseSource = null;
+}
+
+function stopMusicNodes() {
+  musicNodes.forEach((node) => {
+    try {
+      if (typeof node.stop === "function") node.stop();
+    } catch {
+      // Already stopped.
+    }
+    try {
+      if (typeof node.disconnect === "function") node.disconnect();
+    } catch {
+      // Already disconnected.
+    }
+  });
+  musicNodes = [];
 }
 
 function restartSoundIfNeeded() {
@@ -469,6 +484,129 @@ function renderSound() {
   el.soundToggle.setAttribute("aria-pressed", String(soundEnabled));
   el.soundToggle.firstElementChild.textContent = soundEnabled ? "🔊" : "🔇";
   el.soundToggle.lastElementChild.textContent = soundEnabled ? "声音开启" : "声音关闭";
+}
+
+function createSoundscape(type) {
+  if (type === "rain") {
+    noiseSource = audioContext.createBufferSource();
+    noiseSource.buffer = createNoiseBuffer("rain");
+    noiseSource.loop = true;
+    noiseSource.connect(noiseGain);
+    noiseSource.start();
+    addPad([196, 246.94, 293.66, 369.99], 0.08, "sine");
+    return;
+  }
+
+  if (type === "beta") {
+    addPad([174.61, 220, 261.63, 329.63], 0.07, "sine");
+    addPulse(16, 0.045);
+    addShimmer([659.25, 783.99], 0.018);
+    return;
+  }
+
+  if (type === "piano") {
+    addPad([130.81, 164.81, 196, 261.63], 0.075, "triangle");
+    addSoftChimes([392, 493.88, 587.33, 659.25], 0.05);
+    return;
+  }
+
+  addPad([146.83, 185, 220, 277.18, 329.63], 0.075, "sine");
+  addShimmer([440, 554.37, 659.25], 0.014);
+}
+
+function addPad(frequencies, level, type) {
+  frequencies.forEach((frequency, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
+    const lfo = audioContext.createOscillator();
+    const lfoGain = audioContext.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    filter.type = "lowpass";
+    filter.frequency.value = 900 + index * 80;
+    filter.Q.value = 0.7;
+    gain.gain.value = level / frequencies.length;
+    lfo.type = "sine";
+    lfo.frequency.value = 0.035 + index * 0.011;
+    lfoGain.gain.value = 2.5;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscillator.detune);
+    oscillator.connect(filter);
+    filter.connect(gain);
+    gain.connect(noiseGain);
+
+    oscillator.start();
+    lfo.start();
+    musicNodes.push(oscillator, gain, filter, lfo, lfoGain);
+  });
+}
+
+function addPulse(rate, level) {
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  const lfo = audioContext.createOscillator();
+  const lfoGain = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.value = 220;
+  gain.gain.value = level;
+  lfo.type = "sine";
+  lfo.frequency.value = rate;
+  lfoGain.gain.value = level * 0.8;
+
+  lfo.connect(lfoGain);
+  lfoGain.connect(gain.gain);
+  oscillator.connect(gain);
+  gain.connect(noiseGain);
+  oscillator.start();
+  lfo.start();
+  musicNodes.push(oscillator, gain, lfo, lfoGain);
+}
+
+function addShimmer(frequencies, level) {
+  frequencies.forEach((frequency, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const filter = audioContext.createBiquadFilter();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+    filter.type = "lowpass";
+    filter.frequency.value = 1400;
+    gain.gain.value = level / frequencies.length;
+    oscillator.connect(filter);
+    filter.connect(gain);
+    gain.connect(noiseGain);
+    oscillator.start(audioContext.currentTime + index * 0.12);
+    musicNodes.push(oscillator, gain, filter);
+  });
+}
+
+function addSoftChimes(frequencies, level) {
+  frequencies.forEach((frequency, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const delay = audioContext.createDelay();
+    const feedback = audioContext.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.value = frequency;
+    gain.gain.value = level / frequencies.length;
+    delay.delayTime.value = 0.28 + index * 0.04;
+    feedback.gain.value = 0.18;
+
+    oscillator.connect(gain);
+    gain.connect(noiseGain);
+    gain.connect(delay);
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(noiseGain);
+    oscillator.start(audioContext.currentTime + index * 0.18);
+    musicNodes.push(oscillator, gain, delay, feedback);
+  });
 }
 
 function createNoiseBuffer(type) {
